@@ -29,48 +29,65 @@ export default {
 
 // ─── Serve raw RSS feed ───────────────────────────────────────────────────────
 async function serveRssFeed(env) {
-  const cached = await env.RSS_CACHE.get("latest-feed");
-  const xml = cached ?? await fetchAndCacheFeed(env);
-
-  return new Response(xml, {
-    headers: {
-      "Content-Type": "application/rss+xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+  try {
+    const cached = await env.RSS_CACHE.get("latest-feed");
+    const xml = cached ?? await fetchAndCacheFeed(env);
+    return new Response(xml, {
+      headers: {
+        "Content-Type": "application/rss+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    console.error("serveRssFeed error:", err);
+    return new Response("Feed temporarily unavailable", { status: 503 });
+  }
 }
 
 // ─── Serve episodes as JSON array ────────────────────────────────────────────
 async function serveEpisodesJson(env) {
-  const cached = await env.RSS_CACHE.get("latest-feed");
-  const xml = cached ?? await fetchAndCacheFeed(env);
-
-  const episodes = parseRssToJson(xml);
-  return new Response(JSON.stringify(episodes), {
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=3600",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+  try {
+    const cached = await env.RSS_CACHE.get("latest-feed");
+    const xml = cached ?? await fetchAndCacheFeed(env);
+    const episodes = parseRssToJson(xml);
+    return new Response(JSON.stringify(episodes), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    console.error("serveEpisodesJson error:", err);
+    return new Response(JSON.stringify({ error: "Episodes temporarily unavailable" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 // ─── Serve only the latest episode ───────────────────────────────────────────
 async function serveLatestEpisode(env) {
-  const cached = await env.RSS_CACHE.get("latest-feed");
-  const xml = cached ?? await fetchAndCacheFeed(env);
-
-  const episodes = parseRssToJson(xml);
-  const latest = episodes[0] ?? null;
-
-  return new Response(JSON.stringify(latest), {
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=3600",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+  try {
+    const cached = await env.RSS_CACHE.get("latest-feed");
+    const xml = cached ?? await fetchAndCacheFeed(env);
+    const episodes = parseRssToJson(xml);
+    const latest = episodes[0] ?? null;
+    return new Response(JSON.stringify(latest), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=3600",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    console.error("serveLatestEpisode error:", err);
+    return new Response(JSON.stringify({ error: "Episode temporarily unavailable" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 // ─── Fetch and cache the RSS feed ─────────────────────────────────────────────
@@ -79,6 +96,9 @@ async function fetchAndCacheFeed(env) {
   const res = await fetch(feedUrl, {
     headers: { "User-Agent": "BeatinDaBlock-Worker/1.0" },
   });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch RSS feed: ${res.status} ${res.statusText}`);
+  }
   const xml = await res.text();
   await env.RSS_CACHE.put("latest-feed", xml, { expirationTtl: 3600 });
   return xml;

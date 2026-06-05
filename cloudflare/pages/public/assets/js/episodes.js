@@ -71,13 +71,7 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
-/** Safely strip HTML tags using the browser's own DOM parser. */
+/** Strip HTML tags from a string without touching the DOM. */
 function stripHtml(html) {
-  const div = document.createElement("div");
-  div.textContent = html; // assign as text to prevent script execution
-  const safe = div.textContent;
-  // Re-parse as HTML now that it's been text-escaped, then extract innerText
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = safe;
-  return wrapper.textContent || "";
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }

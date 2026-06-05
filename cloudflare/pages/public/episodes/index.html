@@ -58,11 +58,7 @@
           return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
         }
         function stripHtml(html) {
-          const d = document.createElement("div");
-          d.textContent = html;
-          const w = document.createElement("div");
-          w.innerHTML = d.textContent;
-          return w.textContent || "";
+          return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
         }
 
         container.innerHTML = episodes.map(ep => {

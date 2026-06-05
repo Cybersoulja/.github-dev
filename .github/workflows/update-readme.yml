@@ -44,48 +44,33 @@ jobs:
 
       - name: Update README episode section
         if: steps.rss.outputs.episode_found == 'true'
+        # RSS values are passed only via env: to avoid shell injection
         run: |
-          TITLE="${{ steps.rss.outputs.title }}"
-          DATE="${{ steps.rss.outputs.date }}"
-          LINK="${{ steps.rss.outputs.link }}"
-          DESC="${{ steps.rss.outputs.desc }}"
-
-          BLOCK="<!-- EPISODE-START -->
-          ### 🎧 [$TITLE]($LINK)
-          **Released:** $DATE
-
-          $DESC
-
-          ➡️ [Listen now →]($LINK)
-          <!-- EPISODE-END -->"
-
-          # Replace the section between the markers
           python3 - <<'PYEOF'
-          import re, pathlib
+          import re, pathlib, os
 
           readme = pathlib.Path("profile/README.md")
           content = readme.read_text()
 
-          import os
           title = os.environ.get("TITLE", "")
           date  = os.environ.get("DATE",  "")
           link  = os.environ.get("LINK",  "")
           desc  = os.environ.get("DESC",  "")
 
-          block = f"""<!-- EPISODE-START -->
-          ### 🎧 [{title}]({link})
-          **Released:** {date}
-
-          {desc}
-
-          ➡️ [Listen now →]({link})
-          <!-- EPISODE-END -->"""
+          block = (
+              "<!-- EPISODE-START -->\n"
+              f"### 🎧 [{title}]({link})\n"
+              f"**Released:** {date}\n\n"
+              f"{desc}\n\n"
+              f"➡️ [Listen now →]({link})\n"
+              "<!-- EPISODE-END -->"
+          )
 
           new_content = re.sub(
               r"<!-- EPISODE-START -->.*?<!-- EPISODE-END -->",
               block,
               content,
-              flags=re.DOTALL
+              flags=re.DOTALL,
           )
           readme.write_text(new_content)
           print("README updated.")
