@@ -13,7 +13,7 @@
         <a class="btn btn--primary" href="<?php echo esc_url( get_post_type_archive_link( 'episode' ) ); ?>">
           Listen Now
         </a>
-        <a class="btn btn--ghost" href="<?php echo esc_url( get_page_link( get_page_by_path( 'about' ) ) ); ?>">
+        <a class="btn btn--ghost" href="<?php echo esc_url( home_url( '/about/' ) ); ?>">
           Our Story
         </a>
       </div>

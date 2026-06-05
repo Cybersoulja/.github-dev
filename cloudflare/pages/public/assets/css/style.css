@@ -201,7 +201,16 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .nav__links { display: none; } /* TODO: add hamburger menu */
+  .nav__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
   .about-teaser__grid { grid-template-columns: 1fr; }
   .about-teaser__image { order: -1; }
 }

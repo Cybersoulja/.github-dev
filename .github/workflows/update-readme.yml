@@ -50,15 +50,6 @@ jobs:
           LINK="${{ steps.rss.outputs.link }}"
           DESC="${{ steps.rss.outputs.desc }}"
 
-          BLOCK="<!-- EPISODE-START -->
-          ### 🎧 [$TITLE]($LINK)
-          **Released:** $DATE
-
-          $DESC
-
-          ➡️ [Listen now →]($LINK)
-          <!-- EPISODE-END -->"
-
           # Replace the section between the markers
           python3 - <<'PYEOF'
           import re, pathlib

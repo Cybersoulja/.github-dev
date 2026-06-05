@@ -1,10 +1,10 @@
 name = "beatindablock"
-main = "cloudflare/workers/redirect.js"
+main = "workers/redirect.js"
 compatibility_date = "2024-01-01"
 
 # ─── Pages project ────────────────────────────────────────────────────────────
 [site]
-bucket = "./cloudflare/pages/public"
+bucket = "./pages/public"
 
 # ─── Environment variables ────────────────────────────────────────────────────
 [vars]

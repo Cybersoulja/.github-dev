@@ -11,7 +11,7 @@ while ( have_posts() ) : the_post();
     $ep_num     = get_post_meta( get_the_ID(), '_episode_number', true );
 ?>
 
-<article class="section" <?php post_class(); ?>>
+<article <?php post_class( 'section' ); ?>>
   <div class="section__inner" style="max-width:800px;">
 
     <?php if ( $ep_num ) : ?>

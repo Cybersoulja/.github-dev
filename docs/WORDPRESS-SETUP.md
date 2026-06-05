@@ -66,7 +66,7 @@ Starter theme files are provided in `wordpress/theme/` in this repo.
 The theme uses:
 - CSS variables matching the brand palette (from `cloudflare/pages/public/assets/css/style.css`)
 - `functions.php` registering the Episodes custom post type
-- Templates: `index.php`, `single-episode.php`, `archive-episode.php`, `page-contact.php`
+- Templates: `index.php`, `single-episode.php`
 
 ---
 

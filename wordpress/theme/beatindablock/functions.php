@@ -136,15 +136,16 @@ add_action( 'save_post_episode', function ( $post_id ) {
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
     if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-    $fields = [
-        '_episode_audio_url' => 'episode_audio_url',
-        '_episode_duration'  => 'episode_duration',
-        '_episode_guest'     => 'episode_guest',
-        '_episode_number'    => 'episode_number',
-    ];
-    foreach ( $fields as $meta_key => $field ) {
-        if ( isset( $_POST[ $field ] ) ) {
-            update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ $field ] ) );
-        }
+    if ( isset( $_POST['episode_audio_url'] ) ) {
+        update_post_meta( $post_id, '_episode_audio_url', esc_url_raw( wp_unslash( $_POST['episode_audio_url'] ) ) );
+    }
+    if ( isset( $_POST['episode_duration'] ) ) {
+        update_post_meta( $post_id, '_episode_duration', sanitize_text_field( wp_unslash( $_POST['episode_duration'] ) ) );
+    }
+    if ( isset( $_POST['episode_guest'] ) ) {
+        update_post_meta( $post_id, '_episode_guest', sanitize_text_field( wp_unslash( $_POST['episode_guest'] ) ) );
+    }
+    if ( isset( $_POST['episode_number'] ) ) {
+        update_post_meta( $post_id, '_episode_number', absint( wp_unslash( $_POST['episode_number'] ) ) );
     }
 } );

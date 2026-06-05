@@ -7,6 +7,11 @@
  *  - JSON API endpoint at /api/episodes for the website front-end
  */
 
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+const MAX_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_MESSAGE_LENGTH = 5000;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -21,6 +26,10 @@ export default {
 
     if (url.pathname === "/api/episodes/latest") {
       return serveLatestEpisode(env);
+    }
+
+    if (url.pathname === "/api/contact") {
+      return handleContact(request, env);
     }
 
     return new Response("Not found", { status: 404 });
@@ -79,9 +88,89 @@ async function fetchAndCacheFeed(env) {
   const res = await fetch(feedUrl, {
     headers: { "User-Agent": "BeatinDaBlock-Worker/1.0" },
   });
+  if (!res.ok) {
+    throw new Error(`RSS fetch failed with status ${res.status}`);
+  }
   const xml = await res.text();
   await env.RSS_CACHE.put("latest-feed", xml, { expirationTtl: 3600 });
   return xml;
+}
+
+async function handleContact(request, env) {
+  const allowedOrigin = env.SITE_URL ?? "https://beatindablock.com";
+  const requestOrigin = request.headers.get("Origin");
+  const accessOrigin = requestOrigin === allowedOrigin ? requestOrigin : allowedOrigin;
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": accessOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    Vary: "Origin",
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: { ...corsHeaders, Allow: "POST, OPTIONS" },
+    });
+  }
+
+  const form = await request.formData();
+  const name = String(form.get("name") ?? "").trim();
+  const email = String(form.get("email") ?? "").trim();
+  const message = String(form.get("message") ?? "").trim();
+
+  if (!name || !email || !message) {
+    return new Response(JSON.stringify({ error: "Missing required fields." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (
+    name.length > MAX_NAME_LENGTH ||
+    email.length > MAX_EMAIL_LENGTH ||
+    message.length > MAX_MESSAGE_LENGTH
+  ) {
+    return new Response(JSON.stringify({ error: "Input is too long." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return new Response(JSON.stringify({ error: "Invalid email address." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (!env.CONTACT_WEBHOOK_URL) {
+    return new Response(JSON.stringify({ error: "Contact endpoint is not configured." }), {
+      status: 501,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const webhookRes = await fetch(env.CONTACT_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, message }),
+  });
+
+  if (!webhookRes.ok) {
+    return new Response(JSON.stringify({ error: "Failed to deliver message." }), {
+      status: 502,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify({ ok: true }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 // ─── Basic RSS → JSON parser ──────────────────────────────────────────────────
