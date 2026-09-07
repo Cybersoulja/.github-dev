@@ -76,12 +76,17 @@ function serveDidDocument(env) {
 
 // ─── describeFeedGenerator ──────────────────────────────────────────────────
 async function describeFeedGenerator(env) {
-  const did = `did:web:${env.FEEDGEN_HOSTNAME}`;
-  const publisherDid = await resolvePublisherDid(env);
-  return json({
-    did,
-    feeds: [{ uri: feedUri(publisherDid, env) }],
-  });
+  try {
+    const did = `did:web:${env.FEEDGEN_HOSTNAME}`;
+    const publisherDid = await resolvePublisherDid(env);
+    return json({
+      did,
+      feeds: [{ uri: feedUri(publisherDid, env) }],
+    });
+  } catch (err) {
+    console.error("describeFeedGenerator error:", err);
+    return json({ error: "InternalServerError", message: "Feed temporarily unavailable" }, 503);
+  }
 }
 
 // ─── getFeedSkeleton ─────────────────────────────────────────────────────────
@@ -168,8 +173,11 @@ async function indexCuratedAccounts(env) {
 
     for (const account of accounts.results ?? []) {
       try {
-        const did = account.did ?? await resolveHandle(account.handle);
-        if (!account.did) {
+        // Re-resolve on every run (not just when did is unset) so a handle
+        // that changes ownership or moves to a different DID doesn't leave
+        // the feed indexing the old account indefinitely.
+        const did = await resolveHandle(account.handle);
+        if (did !== account.did) {
           await env.DB.prepare(
             `UPDATE feed_accounts SET did = ?1 WHERE handle = ?2`
           ).bind(did, account.handle).run();
