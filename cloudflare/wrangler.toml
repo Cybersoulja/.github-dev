@@ -12,6 +12,12 @@ SITE_URL      = "https://beatindablock.com"
 WORDPRESS_URL = "https://beatindablock.wordpress.com"
 RSS_FEED_URL  = "https://beatindablock.com/feed/podcast"
 
+# AT Protocol (Bluesky) feed generator — see cloudflare/workers/atproto-feed.js
+FEEDGEN_HOSTNAME         = "beatindablock.com"
+FEEDGEN_PUBLISHER_HANDLE = "oneseco.com"
+FEEDGEN_RECORD_NAME      = "beatindablock-curated"
+FEEDGEN_DISPLAY_NAME     = "BeatinDaBlock"
+
 # ─── D1 Database (episode metadata) ──────────────────────────────────────────
 [[d1_databases]]
 binding  = "DB"
