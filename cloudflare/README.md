@@ -9,7 +9,8 @@ cloudflare/
 ├── wrangler.toml          # Cloudflare Workers & Pages project config
 ├── workers/
 │   ├── redirect.js        # Handles legacy URL redirects + wordpress.com → .com
-│   └── rss-proxy.js       # Caches and serves the podcast RSS feed at the edge
+│   ├── rss-proxy.js       # Caches and serves the podcast RSS feed at the edge
+│   └── atproto-feed.js    # Bluesky custom feed generator (XRPC + did:web)
 └── pages/
     ├── public/            # Static site files (HTML, CSS, JS, assets)
     └── src/               # Source files (build → public/)
@@ -31,7 +32,22 @@ wrangler deploy cloudflare/workers/redirect.js --name beatindablock-redirects
 
 # Deploy RSS proxy worker
 wrangler deploy cloudflare/workers/rss-proxy.js --name beatindablock-rss
+
+# Deploy the AT Protocol feed generator worker (own cron, every 5 min —
+# pass --triggers explicitly so it doesn't inherit wrangler.toml's hourly
+# [triggers] block, which the redirect worker already deploys under)
+wrangler deploy cloudflare/workers/atproto-feed.js \
+  --name beatindablock-atproto-feed --triggers "*/5 * * * *"
 ```
+
+Then add routes in the dashboard (more specific than `beatindablock.com/*`):
+- `beatindablock.com/xrpc/*` → `beatindablock-atproto-feed`
+- `beatindablock.com/.well-known/did.json` → `beatindablock-atproto-feed`
+
+Publish the feed generator record once (and again whenever its display name
+or description changes) with `scripts/publish-atproto-feed.mjs` — see that
+file's header comment for the required env vars (a Bluesky *app password*,
+never the main account password).
 
 ### Pages (Static Site)
 

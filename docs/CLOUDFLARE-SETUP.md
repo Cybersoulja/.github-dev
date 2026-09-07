@@ -161,12 +161,50 @@ For video podcast hosting:
 
 ---
 
+## Step 13 — AT Protocol (Bluesky) Feed Generator
+
+Deploys a custom Bluesky feed ("BeatinDaBlock") built from a curated list of
+accounts. See `cloudflare/workers/atproto-feed.js` for the full design.
+
+1. Add the curated accounts to D1 (the schema seeds `oneseco.com`; add more with):
+   ```bash
+   wrangler d1 execute beatindablock-episodes \
+     --command="INSERT OR IGNORE INTO feed_accounts (handle) VALUES ('somehandle.bsky.social')"
+   ```
+2. Confirm `FEEDGEN_HOSTNAME`, `FEEDGEN_PUBLISHER_HANDLE`, `FEEDGEN_RECORD_NAME`,
+   `FEEDGEN_DISPLAY_NAME` in `cloudflare/wrangler.toml` are correct for your setup.
+3. Deploy the worker with its own 5-minute cron:
+   ```bash
+   wrangler deploy cloudflare/workers/atproto-feed.js \
+     --name beatindablock-atproto-feed --triggers "*/5 * * * *"
+   ```
+4. Add routes in the dashboard:
+   - `beatindablock.com/xrpc/*` → `beatindablock-atproto-feed`
+   - `beatindablock.com/.well-known/did.json` → `beatindablock-atproto-feed`
+5. Publish the feed generator record once, using a Bluesky *app password*
+   (Settings → App Passwords in the Bluesky app — never the main password):
+   ```bash
+   BSKY_HANDLE=oneseco.com \
+   BSKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx \
+   FEEDGEN_HOSTNAME=beatindablock.com \
+   FEEDGEN_RECORD_NAME=beatindablock-curated \
+   FEEDGEN_DISPLAY_NAME="BeatinDaBlock" \
+   FEEDGEN_DESCRIPTION="Posts from the BeatinDaBlock podcast crew." \
+   node scripts/publish-atproto-feed.mjs
+   ```
+6. Verify: `curl https://beatindablock.com/.well-known/did.json` and
+   `curl https://beatindablock.com/xrpc/app.bsky.feed.generator.describeFeedGenerator`
+   should both return JSON. The feed then appears in Bluesky search under
+   its display name within a few minutes.
+
+---
+
 ## Checklist
 
 - [ ] Domain added to Cloudflare
 - [ ] SSL set to Full (strict)
 - [ ] Pages project created and deployed
-- [ ] Workers deployed (redirect + RSS proxy)
+- [ ] Workers deployed (redirect + RSS proxy + atproto feed)
 - [ ] Routes configured
 - [ ] KV namespace created and ID in wrangler.toml
 - [ ] D1 database created, ID in wrangler.toml, schema applied
