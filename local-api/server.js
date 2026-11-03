@@ -24,6 +24,10 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
+// Bind to loopback only by default — this proxy forwards requests using the
+// CRAFT_API_URL capability token with no auth of its own, so listening on
+// all interfaces would let any other host on the network use that token.
+const HOST = process.env.HOST ?? "127.0.0.1";
 const CRAFT_API_URL = process.env.CRAFT_API_URL;
 const USE_MOCKS = process.env.USE_MOCKS === "true";
 
@@ -85,7 +89,7 @@ function loadMock(filename) {
   return require(path.join(__dirname, "mocks", filename));
 }
 
-app.listen(PORT, () => {
-  console.log(`local-api listening on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`local-api listening on http://${HOST}:${PORT}`);
   console.log(`mode: ${USE_MOCKS ? "mock" : "proxy"}${USE_MOCKS ? "" : CRAFT_API_URL ? "" : " (CRAFT_API_URL not set!)"}`);
 });
