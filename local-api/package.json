@@ -1,0 +1,22 @@
+{
+  "name": "local-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Development API & Mock Server for Craft Connect, for use alongside Claude Desktop and Cursor during local development.",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "mcp": "node mcp-server.js",
+    "test": "node test/smoke.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  }
+}

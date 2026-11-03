@@ -1,0 +1,11 @@
+{
+  "id": "mock-doc-1",
+  "type": "document",
+  "content": [
+    {
+      "id": "mock-block-1",
+      "type": "text",
+      "content": "This is a mocked block returned by the local dev server."
+    }
+  ]
+}
