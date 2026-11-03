@@ -1,0 +1,14 @@
+{
+  "documents": [
+    {
+      "id": "mock-doc-1",
+      "title": "Welcome to the Craft Local API",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "mock-doc-2",
+      "title": "Mock Document Two",
+      "updatedAt": "2026-01-02T00:00:00.000Z"
+    }
+  ]
+}
