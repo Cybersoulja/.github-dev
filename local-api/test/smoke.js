@@ -33,27 +33,28 @@ async function main() {
       const res = await fetch(`${BASE}/api/documents`);
       assertEqual(res.status, 200, "status");
       const body = await res.json();
-      if (!Array.isArray(body.documents) || body.documents.length === 0) {
-        throw new Error("expected non-empty documents array");
+      if (!Array.isArray(body.items) || body.items.length === 0) {
+        throw new Error("expected non-empty items array");
       }
     });
 
     await check("GET /api/blocks", async () => {
-      const res = await fetch(`${BASE}/api/blocks`);
+      const res = await fetch(`${BASE}/api/blocks?id=mock-doc-1`);
       assertEqual(res.status, 200, "status");
       const body = await res.json();
-      if (!Array.isArray(body.blocks)) throw new Error("expected blocks array");
+      if (!Array.isArray(body.content)) throw new Error("expected a content array (block tree)");
     });
 
     await check("POST /api/blocks", async () => {
       const res = await fetch(`${BASE}/api/blocks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: "mock-doc-1", markdown: "hello" }),
+        body: JSON.stringify({ position: { position: "end", pageId: "mock-doc-1" }, markdown: "hello" }),
       });
       assertEqual(res.status, 201, "status");
       const body = await res.json();
-      assertEqual(body.markdown, "hello", "echoed markdown");
+      assertEqual(body.content, "hello", "echoed markdown");
+      assertEqual(body.pageId, "mock-doc-1", "echoed target page");
     });
 
     console.log("\nAll smoke checks passed.");

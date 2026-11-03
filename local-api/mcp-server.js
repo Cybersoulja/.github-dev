@@ -54,11 +54,15 @@ server.registerTool(
   "list_blocks",
   {
     title: "List Craft blocks",
-    description: "Lists blocks via the local dev server's /api/blocks endpoint.",
-    inputSchema: {},
+    description:
+      "Reads a document's block tree via the local dev server's /api/blocks endpoint. Pass documentId to select a specific document — Craft's block-read endpoint selects by id, so an empty call without one may not return anything useful against the real API.",
+    inputSchema: {
+      documentId: z.string().optional().describe("The document (or daily note) id to read blocks for"),
+    },
   },
-  async () => {
-    const data = await callLocalApi("GET", "/api/blocks");
+  async ({ documentId }) => {
+    const query = documentId ? `?id=${encodeURIComponent(documentId)}` : "";
+    const data = await callLocalApi("GET", `/api/blocks${query}`);
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
 );
@@ -74,7 +78,12 @@ server.registerTool(
     },
   },
   async ({ documentId, markdown }) => {
-    const data = await callLocalApi("POST", "/api/blocks", { documentId, markdown });
+    // Craft's Insert Blocks API targets a page via a `position` object, not
+    // a top-level documentId — see local-api/README.md's note on this.
+    const data = await callLocalApi("POST", "/api/blocks", {
+      position: { position: "end", pageId: documentId },
+      markdown,
+    });
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
   }
 );

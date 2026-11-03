@@ -30,9 +30,20 @@ const PORT = parseInt(process.env.PORT ?? "3000", 10);
 const HOST = process.env.HOST ?? "127.0.0.1";
 const CRAFT_API_URL = process.env.CRAFT_API_URL;
 const USE_MOCKS = process.env.USE_MOCKS === "true";
+// Open CORS would let any webpage a developer has open in their browser read
+// (and, for GET, exfiltrate) Craft documents through this unauthenticated
+// proxy while it's running. Default to no cross-origin access at all; opt
+// in per trusted origin (e.g. the Craft Connect API Studio's own origin)
+// via a comma-separated ALLOWED_ORIGINS env var.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const app = express();
-app.use(cors());
+if (ALLOWED_ORIGINS.length > 0) {
+  app.use(cors({ origin: ALLOWED_ORIGINS }));
+}
 app.use(express.json());
 
 app.get("/api/documents", async (req, res) => {
@@ -47,7 +58,13 @@ app.get("/api/blocks", async (req, res) => {
 
 app.post("/api/blocks", async (req, res) => {
   if (USE_MOCKS) {
-    return res.status(201).json({ ...loadMock("blocks.json").blocks[0], ...req.body, id: `mock-block-${Date.now()}` });
+    const { position, markdown } = req.body ?? {};
+    return res.status(201).json({
+      id: `mock-block-${Date.now()}`,
+      type: "text",
+      content: markdown,
+      pageId: position?.pageId,
+    });
   }
   await proxy(req, res, "/blocks", { method: "POST", body: req.body });
 });

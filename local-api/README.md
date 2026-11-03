@@ -33,7 +33,7 @@ npm run dev       # same, but restarts on file changes
 
 Routes:
 - `GET /api/documents` — proxies to `${CRAFT_API_URL}/documents`
-- `GET /api/blocks` — proxies to `${CRAFT_API_URL}/blocks`
+- `GET /api/blocks?id=<documentId>` — proxies to `${CRAFT_API_URL}/blocks?id=<documentId>`
 - `POST /api/blocks` — proxies to `${CRAFT_API_URL}/blocks`
 - `GET /healthz` — reports whether mocks are on and `CRAFT_API_URL` is configured
 
@@ -43,6 +43,21 @@ you have a capability token at all.
 
 Your capability token lives only in `.env` on your machine (gitignored) —
 it's never sent to Claude, Cursor, or anywhere outside this local proxy.
+This proxy has no authentication of its own, so it also:
+- binds to `127.0.0.1` by default (`HOST` in `.env`), not all network interfaces
+- allows no cross-origin browser access by default (`ALLOWED_ORIGINS` in `.env`)
+
+### A note on the real Craft Connect API shapes
+
+This repo's sandbox can't reach `connect.craft.do`, so the exact request/
+response shapes below are **unverified against the live API docs** —
+confirm them yourself at https://connect.craft.do/api-docs/space and adjust
+`server.js` / `mcp-server.js` / `mocks/` if they differ:
+- `GET /blocks` is assumed to take an `id` query param and return a nested
+  block tree (`{ id, type, content: [...] }`), not a flat `blocks` array.
+- `POST /blocks` is assumed to target a page via `{ position: { position, pageId }, markdown }`,
+  not a top-level `documentId`.
+- `GET /documents` is assumed to return `{ items: [...] }`, not `{ documents: [...] }`.
 
 ## Connecting Claude Desktop / Cursor via MCP
 
